@@ -1,0 +1,9 @@
+streamlit
+fastapi
+uvicorn
+mysql-connector-python
+python-dotenv
+requests
+qrcode[pil]
+plotly
+google-generativeai
