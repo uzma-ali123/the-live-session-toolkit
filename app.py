@@ -3,7 +3,8 @@ import random
 import string
 import requests
 import uuid
-
+import os
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="The Live Session Toolkit",
@@ -138,7 +139,7 @@ def create_session_page():
             if session_name and host_name:
                 try:
                     response = requests.post(
-                        "http://127.0.0.1:8000/sessions",
+                        f"{BACKEND_URL}/sessions"
                         json={
                             "title": session_name,
                             "host_name": host_name,
@@ -355,7 +356,7 @@ def join_page():
             try:
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/sessions/join",
+                    f"{BACKEND_URL}/sessions"
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
@@ -483,7 +484,7 @@ def joined_session_page():
             try:
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/sessions/join",
+                    f"{BACKEND_URL}/sessions"
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
