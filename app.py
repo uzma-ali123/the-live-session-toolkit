@@ -487,7 +487,7 @@ def joined_session_page():
             try:
 
                 response = requests.post(
-                    f"{BACKEND_URL}/sessions",
+                    f"{BACKEND_URL}/sessions/join",
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
@@ -540,11 +540,11 @@ if st.session_state.page == "home":
 elif st.session_state.page == "create":
     create_session_page()
 
+elif st.session_state.page == "session_created":
+    session_created_page()
+
 elif st.session_state.page == "join":
     join_page()
 
 elif st.session_state.page == "host_dashboard":
     host_dashboard_page()
-
-elif st.session_state.page == "joined":
-    joined_session_page()
