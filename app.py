@@ -546,5 +546,8 @@ elif st.session_state.page == "session_created":
 elif st.session_state.page == "join":
     join_page()
 
+elif st.session_state.page == "joined":
+    joined_session_page()
+
 elif st.session_state.page == "host_dashboard":
     host_dashboard_page()
