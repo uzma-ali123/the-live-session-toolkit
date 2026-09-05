@@ -359,7 +359,7 @@ def join_page():
             try:
 
                 response = requests.post(
-                    f"{BACKEND_URL}/sessions",
+                    f"{BACKEND_URL}/sessions/join",
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
