@@ -4,8 +4,11 @@ import string
 import requests
 import uuid
 import os
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-# ---------- PAGE CONFIG ----------
+try:
+    BACKEND_URL = st.secrets["BACKEND_URL"]
+except Exception:
+    BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+    # ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="The Live Session Toolkit",
     page_icon="🎤",
