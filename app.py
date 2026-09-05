@@ -139,7 +139,7 @@ def create_session_page():
             if session_name and host_name:
                 try:
                     response = requests.post(
-                        f"{BACKEND_URL}/sessions"
+                        f"{BACKEND_URL}/sessions",
                         json={
                             "title": session_name,
                             "host_name": host_name,
@@ -356,7 +356,7 @@ def join_page():
             try:
 
                 response = requests.post(
-                    f"{BACKEND_URL}/sessions"
+                    f"{BACKEND_URL}/sessions",
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
@@ -484,7 +484,7 @@ def joined_session_page():
             try:
 
                 response = requests.post(
-                    f"{BACKEND_URL}/sessions"
+                    f"{BACKEND_URL}/sessions",
                     json={
                         "session_code": session_code.strip().upper(),
                         "participant_name": participant_name.strip()
