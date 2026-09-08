@@ -8,12 +8,206 @@ try:
     BACKEND_URL = st.secrets["BACKEND_URL"]
 except Exception:
     BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-    # ---------- PAGE CONFIG ----------
+# ---------- PAGE CONFIG ----------
 st.set_page_config(
-    page_title="The Live Session Toolkit",
-    page_icon="🎤",
-    layout="wide"
+    page_title="Live Session Toolkit",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+# ---------- PROFESSIONAL UI ----------
+st.markdown("""
+<style>
+
+    /* Global */
+    .stApp {
+        background-color: #f7f8fa;
+    }
+
+    .main .block-container {
+        max-width: 1400px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
+    }
+
+    /* Hide Streamlit branding */
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    header {
+        background: transparent !important;
+    }
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #111827;
+        border-right: 1px solid #1f2937;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #f9fafb;
+    }
+
+    /* Main headings */
+    h1 {
+        font-size: 2.4rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.03em;
+        color: #111827;
+    }
+
+    h2 {
+        font-weight: 650 !important;
+        color: #111827;
+    }
+
+    h3 {
+        font-weight: 600 !important;
+        color: #1f2937;
+    }
+
+    /* Paragraph */
+    p {
+        color: #4b5563;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background-color: #ffffff;
+        color: #111827;
+        font-weight: 600;
+        padding: 0.65rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .stButton > button:hover {
+        border-color: #111827;
+        background-color: #111827;
+        color: #ffffff;
+    }
+
+    /* Primary button */
+    .primary-button {
+        background-color: #111827;
+        color: #ffffff;
+        padding: 0.75rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    /* Inputs */
+    .stTextInput input,
+    .stTextArea textarea {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background-color: #ffffff;
+    }
+
+    .stTextInput input:focus,
+    .stTextArea textarea:focus {
+        border-color: #111827;
+        box-shadow: 0 0 0 1px #111827;
+    }
+
+    /* Cards */
+    .app-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .app-card:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .card-title {
+        font-size: 1.15rem;
+        font-weight: 650;
+        color: #111827;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        font-size: 0.95rem;
+        color: #6b7280;
+        line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+        background: #111827;
+        border-radius: 16px;
+        padding: 3rem;
+        margin-bottom: 2rem;
+    }
+
+    .hero-title {
+        color: #ffffff;
+        font-size: 2.8rem;
+        font-weight: 750;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+    }
+
+    .hero-text {
+        color: #d1d5db;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        max-width: 720px;
+    }
+
+    /* Status */
+    .status-live {
+        display: inline-block;
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Metrics */
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .metric-label {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .metric-value {
+        color: #111827;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    /* Divider */
+    hr {
+        border-color: #e5e7eb !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
 
 # ---------- SESSION STATE ----------
 if "page" not in st.session_state:
