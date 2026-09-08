@@ -227,28 +227,36 @@ def generate_session_code():
 
 def home_page():
 
-    st.title("🎤 The Live Session Toolkit")
+    # HERO SECTION
+    st.markdown("""
+    <div class="hero">
+        <div class="hero-title">
+            Live sessions, built for real engagement.
+        </div>
+        <div class="hero-text">
+            Create interactive sessions, connect with your audience,
+            collect responses and manage everything from one place.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Make every live session interactive.")
-
-    st.write(
-        "Create live sessions, engage your audience, run polls, "
-        "collect feedback and generate session insights — all in one place."
-    )
-
-    st.divider()
-
-    st.subheader("What would you like to do?")
+    # ACTION SECTION
+    st.markdown("## Get started")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("## 🎙️ Host a Session")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Host a Session</div>
+            <div class="card-text">
+                Create a live session and manage polls, audience
+                interaction, questions and session activity.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.write(
-            "Create and manage your live session. "
-            "Run polls, Q&A, reactions and view audience responses."
-        )
+        st.write("")
 
         if st.button(
             "Create a Session",
@@ -258,12 +266,17 @@ def home_page():
             st.rerun()
 
     with col2:
-        st.markdown("## 👥 Join a Session")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Join a Session</div>
+            <div class="card-text">
+                Enter a session code and participate in live polls,
+                questions and audience activities.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.write(
-            "Join an existing live session using a session code "
-            "or QR code."
-        )
+        st.write("")
 
         if st.button(
             "Join a Session",
@@ -272,34 +285,74 @@ def home_page():
             st.session_state.page = "join"
             st.rerun()
 
-    st.divider()
+    st.write("")
+    st.write("")
 
-    st.subheader("✨ Key Features")
+    # FEATURES
+    st.markdown("## Everything you need for an interactive session")
 
     feature1, feature2, feature3, feature4 = st.columns(4)
 
     with feature1:
-        st.markdown("### 📊 Live Polls")
-        st.write("Ask questions and see responses in real time.")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Live Polls</div>
+            <div class="card-text">
+                Ask questions and collect audience responses
+                during your session.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with feature2:
-        st.markdown("### ❓ Q&A")
-        st.write("Let your audience ask questions during the session.")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Q&A</div>
+            <div class="card-text">
+                Give participants a dedicated space to ask
+                questions and share ideas.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with feature3:
-        st.markdown("### ❤️ Reactions")
-        st.write("Keep the audience engaged with quick reactions.")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Reactions</div>
+            <div class="card-text">
+                Keep your audience involved with instant
+                session reactions.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with feature4:
-        st.markdown("### 📈 Analytics")
-        st.write("Review session responses and generate insights.")
+        st.markdown("""
+        <div class="app-card">
+            <div class="card-title">Analytics</div>
+            <div class="card-text">
+                Review participation and session responses
+                with clear insights.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    st.write("")
+    st.write("")
 
-    st.caption(
-        "The Live Session Toolkit • Interactive sessions made simple"
-    )
-
+    # FOOTER
+    st.markdown("""
+    <div style="
+        text-align: center;
+        padding: 2rem 0 1rem 0;
+        color: #6b7280;
+        font-size: 0.85rem;
+    ">
+        Live Session Toolkit
+        <br>
+        Interactive sessions made simple.
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==================================================
 # CREATE SESSION PAGE
