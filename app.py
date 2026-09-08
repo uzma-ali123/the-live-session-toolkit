@@ -242,87 +242,146 @@ def session_created_page():
             st.session_state.page = "home"
             st.rerun()
 
-# ==================================================
-# HOST DASHBOARD
-# ==================================================
-
 def host_dashboard_page():
 
-    st.title("🎙️ Host Dashboard")
+    st.title("🎤 Host Dashboard")
 
-    st.success(
-        f"Live Session: {st.session_state.session_name}"
+    session_code = st.session_state.get("session_code", "")
+
+    st.success(f"Live Session: {session_code}")
+
+    st.divider()
+
+    # =========================================================
+    # CREATE POLL
+    # =========================================================
+
+    st.header("📊 Create a Poll")
+
+    question = st.text_input(
+        "Poll Question",
+        placeholder="Example: Which cybersecurity topic is most important?"
     )
 
-    st.write(
-        f"Session Code: **{st.session_state.session_code}**"
-    )
+    option1 = st.text_input("Option 1")
+    option2 = st.text_input("Option 2")
+    option3 = st.text_input("Option 3")
+    option4 = st.text_input("Option 4")
+
+    if st.button("🚀 Create Poll", use_container_width=True):
+
+        options = [
+            option1,
+            option2,
+            option3,
+            option4
+        ]
+
+        options = [
+            option.strip()
+            for option in options
+            if option.strip()
+        ]
+
+        if not question.strip():
+            st.error("Please enter a poll question.")
+
+        elif len(options) < 2:
+            st.error("Please enter at least 2 options.")
+
+        else:
+
+            try:
+
+                response = requests.post(
+                    f"{BACKEND_URL}/polls",
+                    json={
+                        "session_code": session_code,
+                        "question": question.strip(),
+                        "options": options
+                    },
+                    timeout=10
+                )
+
+                if response.status_code == 200:
+
+                    data = response.json()
+
+                    st.success(
+                        f"Poll created successfully! Poll ID: {data['poll_id']}"
+                    )
+
+                    st.session_state.last_poll_id = data["poll_id"]
+
+                else:
+
+                    st.error(
+                        f"Poll creation failed: {response.text}"
+                    )
+
+            except Exception as e:
+
+                st.error(f"Connection error: {e}")
 
     st.divider()
 
-    st.subheader("🎛️ Session Controls")
+    # =========================================================
+    # POLL RESULTS
+    # =========================================================
 
-    col1, col2, col3 = st.columns(3)
+    st.header("📈 Poll Results")
 
-    with col1:
-        st.markdown("### 📊 Polls")
-        st.write("Create questions and collect audience votes.")
+    poll_id = st.session_state.get("last_poll_id")
 
-        if st.button("Open Polls", use_container_width=True):
-            st.info("Poll module will be connected next.")
+    if poll_id:
 
-    with col2:
-        st.markdown("### ❓ Q&A")
-        st.write("Receive and manage audience questions.")
+        if st.button("🔄 Refresh Results"):
 
-        if st.button("Open Q&A", use_container_width=True):
-            st.info("Q&A module will be connected next.")
+            try:
 
-    with col3:
-        st.markdown("### ❤️ Reactions")
-        st.write("See audience reactions during the session.")
+                response = requests.get(
+                    f"{BACKEND_URL}/polls/{poll_id}/results",
+                    timeout=10
+                )
 
-        if st.button("View Reactions", use_container_width=True):
-            st.info("Reaction module will be connected next.")
+                if response.status_code == 200:
+
+                    data = response.json()
+
+                    st.subheader(data["question"])
+
+                    st.write(
+                        f"**Total Votes: {data['total_votes']}**"
+                    )
+
+                    for result in data["results"]:
+
+                        st.write(
+                            f"**{result['option_text']}** — "
+                            f"{result['vote_count']} vote(s)"
+                        )
+
+                else:
+
+                    st.error(
+                        f"Could not load results: {response.text}"
+                    )
+
+            except Exception as e:
+
+                st.error(f"Connection error: {e}")
+
+    else:
+
+        st.info("Create a poll first to see its results.")
 
     st.divider()
 
-    col4, col5, col6 = st.columns(3)
+    if st.button("🏠 Back Home"):
 
-    with col4:
-        st.markdown("### 📢 Announcements")
-        st.write("Send important messages to your audience.")
-
-        if st.button("Announcement", use_container_width=True):
-            st.info("Announcement module will be connected next.")
-
-    with col5:
-        st.markdown("### 👥 Participants")
-        st.write("Monitor people currently joining the session.")
-
-        if st.button("Participants", use_container_width=True):
-            st.info("Participant management will be connected next.")
-
-    with col6:
-        st.markdown("### 📈 Analytics")
-        st.write("View responses and session insights.")
-
-        if st.button("View Analytics", use_container_width=True):
-            st.info("Analytics will be connected later.")
-
-    st.divider()
-
-    st.subheader("🔴 Session Status")
-
-    st.success("Session is ready to run.")
-
-    if st.button(
-        "⛔ End Session",
-        use_container_width=True
-    ):
         st.session_state.page = "home"
-        st.rerun()
 
+        st.rerun()
 # ==================================================
 # TEMPORARY JOIN PAGE
 # ==================================================
@@ -367,7 +426,7 @@ def join_page():
                 )
 
                 if response.status_code == 200:
-
+                    st.session_state.participant_id = response.json()["participant_id"]
                     st.session_state.session_code = session_code.strip().upper()
                     st.session_state.participant_name = participant_name.strip()
 
@@ -401,132 +460,134 @@ def join_page():
         st.session_state.page = "home"
         st.rerun()
 
-    # ==================================================
-# JOINED SESSION PAGE
-# ==================================================
-
 def joined_session_page():
 
-    st.title("🎉 You Joined the Live Session!")
+    st.title("👋 Live Session")
+
+    session_code = st.session_state.get("session_code", "")
+    participant_name = st.session_state.get(
+        "participant_name",
+        "Participant"
+    )
+    participant_id = st.session_state.get("participant_id")
 
     st.success(
-        f"Session Code: {st.session_state.session_code}"
+        f"Welcome, {participant_name}!"
     )
 
     st.write(
-        f"Welcome, **{st.session_state.participant_name}**!"
+        f"Session Code: **{session_code}**"
     )
 
     st.divider()
 
-    st.subheader("🎛️ Live Session")
+    # =========================================================
+    # LOAD POLLS
+    # =========================================================
 
-    col1, col2, col3 = st.columns(3)
+    st.header("📊 Live Polls")
 
-    with col1:
-        st.markdown("### 📊 Polls")
-        st.write("Participate in live polls.")
+    try:
 
-        if st.button("View Polls", use_container_width=True):
-            st.info("Live polls will be connected next.")
+        response = requests.get(
+            f"{BACKEND_URL}/polls/{session_code}",
+            timeout=10
+        )
 
-    with col2:
-        st.markdown("### ❓ Q&A")
-        st.write("Ask questions during the session.")
+        if response.status_code == 200:
 
-        if st.button("Ask a Question", use_container_width=True):
-            st.info("Q&A will be connected next.")
+            data = response.json()
 
-    with col3:
-        st.markdown("### ❤️ Reactions")
-        st.write("Send reactions to the host.")
+            polls = data.get("polls", [])
 
-        if st.button("Send Reaction", use_container_width=True):
-            st.info("Reactions will be connected next.")
+            if not polls:
 
-    st.divider()
+                st.info("No polls available yet.")
 
-    st.info(
-        "You are successfully connected to the live session."
-    )
+            else:
 
-    if st.button(
-        "← Leave Session",
-        use_container_width=True
-    ):
+                for poll in polls:
 
-        st.session_state.page = "home"
-        st.rerun()
+                    st.subheader(poll["question"])
 
-    st.title("👥 Join a Live Session")
+                    options = poll.get("options", [])
 
-    st.write("Enter the session code provided by your host.")
+                    option_labels = [
+                        option["option_text"]
+                        for option in options
+                    ]
 
-    session_code = st.text_input(
-        "Session Code",
-        placeholder="e.g. GM3TFA"
-    )
+                    selected = st.radio(
+                        "Choose your answer:",
+                        option_labels,
+                        key=f"poll_{poll['id']}"
+                    )
 
-    participant_name = st.text_input(
-        "Your Name",
-        placeholder="Enter your name"
-    )
+                    if st.button(
+                        "🗳️ Submit Vote",
+                        key=f"vote_{poll['id']}"
+                    ):
 
-    if st.button(
-        "🚀 Join Session",
-        use_container_width=True
-    ):
+                        selected_option = next(
+                            option
+                            for option in options
+                            if option["option_text"] == selected
+                        )
 
-        if not session_code or not participant_name:
-            st.warning(
-                "Please enter both Session Code and Your Name."
-            )
+                        try:
+
+                            vote_response = requests.post(
+                                f"{BACKEND_URL}/polls/vote",
+                                json={
+                                    "poll_id": poll["id"],
+                                    "option_id": selected_option["id"],
+                                    "participant_id": participant_id
+                                },
+                                timeout=10
+                            )
+
+                            if vote_response.status_code == 200:
+
+                                st.success(
+                                    "✅ Your vote has been submitted!"
+                                )
+
+                            else:
+
+                                st.error(
+                                    vote_response.text
+                                )
+
+                        except Exception as e:
+
+                            st.error(
+                                f"Connection error: {e}"
+                            )
+
+                    st.divider()
 
         else:
 
-            try:
+            st.error(
+                f"Could not load polls: {response.text}"
+            )
 
-                response = requests.post(
-                    f"{BACKEND_URL}/sessions/join",
-                    json={
-                        "session_code": session_code.strip().upper(),
-                        "participant_name": participant_name.strip()
-                    }
-                )
+    except Exception as e:
 
-                if response.status_code == 200:
+        st.error(
+            f"Connection error: {e}"
+        )
 
-                    data = response.json()
+    # =========================================================
+    # LEAVE SESSION
+    # =========================================================
 
-                    st.session_state.session_code = session_code.strip().upper()
-                    st.session_state.participant_name = participant_name.strip()
-                    st.session_state.page = "joined"
-
-                    st.success("Successfully joined the session!")
-
-                    st.rerun()
-
-                else:
-
-                    st.error(
-                        f"Unable to join session: {response.text}"
-                    )
-
-            except Exception as e:
-
-                st.error(
-                    f"Backend connection failed: {e}"
-                )
-
-    st.write("")
-
-    if st.button(
-        "← Back to Home",
-        use_container_width=True
-    ):
+    if st.button("🚪 Leave Session"):
 
         st.session_state.page = "home"
+
         st.rerun()
+
         # ==================================================
 # PAGE ROUTING
 # ==================================================
