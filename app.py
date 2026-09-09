@@ -12,7 +12,7 @@ except Exception:
 st.set_page_config(
     page_title="Live Session Toolkit",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="locked"
 )
 # ---------- PROFESSIONAL UI ----------
 st.markdown("""
@@ -205,7 +205,39 @@ st.markdown("""
     hr {
         border-color: #e5e7eb !important;
     }
+/* Sidebar buttons */
+section[data-testid="stSidebar"] button {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+    border: 1px solid #374151 !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
 
+section[data-testid="stSidebar"] button p {
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] button:hover {
+    background-color: #374151 !important;
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] {
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+    color: #ffffff;
+}
+/* Fix blank white area in sidebar */
+section[data-testid="stSidebar"] .stMarkdown {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -213,7 +245,136 @@ st.markdown("""
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
+if "host_active" not in st.session_state:
+    st.session_state.host_active = False
 
+# ---------- PROFESSIONAL SIDEBAR ----------
+
+def render_sidebar():
+
+    with st.sidebar:
+
+        st.markdown(
+            """
+            <div style="
+                padding-bottom: 1.2rem;
+                border-bottom: 1px solid #374151;
+                margin-bottom: 1.5rem;
+            ">
+                <div style="
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: #ffffff;
+                ">
+                    Live Session Toolkit
+                </div>
+
+                <div style="
+                    font-size: 0.78rem;
+                    color: #9ca3af;
+                    margin-top: 0.35rem;
+                ">
+                    Interactive session platform
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div style="
+                color: #9ca3af;
+                font-size: 0.72rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                margin-bottom: 0.5rem;
+            ">
+                NAVIGATION
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if st.button("Home", use_container_width=True):
+            st.session_state.page = "home"
+            st.rerun()
+
+        if st.session_state.get("host_active", False):
+
+            if st.button("Host Dashboard", use_container_width=True):
+                st.session_state.page = "host_dashboard"
+                st.rerun()
+
+        if st.button("Join Session", use_container_width=True):
+            st.session_state.page = "join"
+            st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown(
+            """
+            <div style="
+                color: #9ca3af;
+                font-size: 0.72rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                margin-bottom: 0.5rem;
+            ">
+                SESSION
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        session_code = st.session_state.get("session_code")
+
+        if session_code:
+
+            st.markdown(
+                f"""
+                <div style="
+                    background: #1f2937;
+                    border: 1px solid #374151;
+                    border-radius: 8px;
+                    padding: 0.8rem;
+                    margin-bottom: 0.75rem;
+                ">
+                    <div style="
+                        color: #9ca3af;
+                        font-size: 0.72rem;
+                    ">
+                        SESSION CODE
+                    </div>
+
+                    <div style="
+                        color: #ffffff;
+                        font-size: 1.15rem;
+                        font-weight: 700;
+                        letter-spacing: 0.08em;
+                        margin-top: 0.25rem;
+                    ">
+                        {session_code}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        else:
+
+            st.markdown(
+                """
+                <div style="
+                    color: #9ca3af;
+                    font-size: 0.82rem;
+                    line-height: 1.5;
+                ">
+                    No active session
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 # ---------- CREATE SESSION CODE ----------
 def generate_session_code():
     return ''.join(
@@ -402,6 +563,7 @@ def create_session_page():
                         st.session_state.session_name = data["title"]
                         st.session_state.host_name = data["host_name"]
                         st.session_state.session_code = data["session_code"]
+                        st.session_state.host_active = True
 
                         st.session_state.page = "session_created"
 
@@ -676,6 +838,7 @@ def join_page():
                     st.session_state.participant_id = response.json()["participant_id"]
                     st.session_state.session_code = session_code.strip().upper()
                     st.session_state.participant_name = participant_name.strip()
+                    st.session_state.host_active = False
 
                     st.session_state.page = "joined"
 
@@ -835,7 +998,9 @@ def joined_session_page():
 
         st.rerun()
 
-        # ==================================================
+render_sidebar()
+
+# ==================================================
 # PAGE ROUTING
 # ==================================================
 

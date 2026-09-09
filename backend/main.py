@@ -5,6 +5,7 @@ import random
 import string
 import os
 from dotenv import load_dotenv
+import hashlib
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ class SessionCreate(BaseModel):
     title: str
     host_name: str
     host_email: str
-
+    host_pin: str
 
 class SessionJoin(BaseModel):
     session_code: str
@@ -101,8 +102,7 @@ def generate_session_code():
             k=6
         )
     )
-
-
+    
 # ==================================================
 # CREATE SESSION
 # ==================================================
@@ -114,46 +114,59 @@ def create_session(session: SessionCreate):
     cursor = None
 
     try:
+        # ------------------------------------------
+        # VALIDATE HOST PIN
+        # ------------------------------------------
 
-        connection = get_database_connection()
-        cursor = connection.cursor()
+        host_pin = session.host_pin.strip()
 
-        # ---------------------------------------------
-        # GENERATE UNIQUE SESSION CODE
-        # ---------------------------------------------
-
-        while True:
-
-            session_code = generate_session_code()
-
-            cursor.execute(
-                """
-                SELECT id
-                FROM sessions
-                WHERE session_code = %s
-                """,
-                (session_code,)
+        if not host_pin.isdigit() or len(host_pin) != 6:
+            raise HTTPException(
+                status_code=400,
+                detail="Host PIN must be exactly 6 digits."
             )
 
-            existing_session = cursor.fetchone()
+        # ------------------------------------------
+        # CONNECT DATABASE
+        # ------------------------------------------
 
-            if not existing_session:
-                break
+        connection = get_database_connection()
+        cursor = connection.cursor(dictionary=True)
 
-        # ---------------------------------------------
-        # CREATE SESSION
-        # ---------------------------------------------
+        # ------------------------------------------
+        # GENERATE SESSION CODE
+        # ------------------------------------------
+
+        session_code = ''.join(
+            random.choices(
+                string.ascii_uppercase + string.digits,
+                k=6
+            )
+        )
+
+        # ------------------------------------------
+        # HASH HOST PIN
+        # ------------------------------------------
+
+        pin_hash = hashlib.sha256(
+            host_pin.encode()
+        ).hexdigest()
+
+        # ------------------------------------------
+        # INSERT SESSION
+        # ------------------------------------------
 
         cursor.execute(
             """
             INSERT INTO sessions
-            (session_code, title, host_name)
-            VALUES (%s, %s, %s)
+            (session_code, title, host_name, host_pin_hash)
+            VALUES (%s, %s, %s, %s)
             """,
             (
                 session_code,
                 session.title,
-                session.host_name
+                session.host_name,
+                pin_hash
             )
         )
 
@@ -169,8 +182,10 @@ def create_session(session: SessionCreate):
             "host_name": session.host_name
         }
 
-    except Exception as e:
+    except HTTPException:
+        raise
 
+    except Exception as e:
         if connection:
             connection.rollback()
 
@@ -180,13 +195,11 @@ def create_session(session: SessionCreate):
         )
 
     finally:
-
         if cursor:
             cursor.close()
 
         if connection:
             connection.close()
-
 # ==================================================
 # JOIN SESSION
 # ==================================================
@@ -358,7 +371,90 @@ def get_session(session_code: str):
         if connection:
             connection.close()
 
+# ==================================================
+# HOST AUTHENTICATION
+# ==================================================
 
+class HostLogin(BaseModel):
+    session_code: str
+    host_pin: str
+
+
+@app.post("/host/login")
+def host_login(data: HostLogin):
+
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_database_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        session_code = data.session_code.strip().upper()
+        host_pin = data.host_pin.strip()
+
+        if not host_pin.isdigit() or len(host_pin) != 6:
+            raise HTTPException(
+                status_code=400,
+                detail="Host PIN must be exactly 6 digits."
+            )
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                session_code,
+                title,
+                host_name,
+                host_pin_hash
+            FROM sessions
+            WHERE session_code = %s
+            """,
+            (session_code,)
+        )
+
+        session = cursor.fetchone()
+
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found."
+            )
+
+        pin_hash = hashlib.sha256(
+            host_pin.encode()
+        ).hexdigest()
+
+        if session["host_pin_hash"] != pin_hash:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid Host PIN."
+            )
+
+        return {
+            "message": "Host authentication successful",
+            "authenticated": True,
+            "session_code": session["session_code"],
+            "session_id": session["id"],
+            "title": session["title"],
+            "host_name": session["host_name"]
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 # ==================================================
 # GET PARTICIPANTS
 # ==================================================
@@ -370,35 +466,10 @@ def get_participants(session_code: str):
     cursor = None
 
     try:
-
         connection = get_database_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # ------------------------------------------
-        # FIND SESSION
-        # ------------------------------------------
-
-        cursor.execute(
-            """
-            SELECT id
-            FROM sessions
-            WHERE session_code = %s
-            """,
-            (session_code.strip().upper(),)
-        )
-
-        session = cursor.fetchone()
-
-        if not session:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Session not found."
-            )
-
-        # ------------------------------------------
-        # GET PARTICIPANTS
-        # ------------------------------------------
+        normalized_code = session_code.strip().upper()
 
         cursor.execute(
             """
@@ -406,32 +477,27 @@ def get_participants(session_code: str):
                 id,
                 participant_name
             FROM participants
-            WHERE session_id = %s
+            WHERE session_code = %s
             ORDER BY id DESC
             """,
-            (session["id"],)
+            (normalized_code,)
         )
 
         participants = cursor.fetchall()
 
         return {
-            "session_code": session_code.strip().upper(),
+            "session_code": normalized_code,
             "total_participants": len(participants),
             "participants": participants
         }
 
-    except HTTPException:
-        raise
-
     except Exception as e:
-
         raise HTTPException(
             status_code=500,
             detail=str(e)
         )
 
     finally:
-
         if cursor:
             cursor.close()
 
@@ -803,3 +869,357 @@ def get_poll_results(poll_id: int):
 
         if connection:
             connection.close()
+
+# ==================================================
+# Q&A
+# ==================================================
+
+class QuestionCreate(BaseModel):
+    session_code: str
+    participant_id: int
+    question_text: str
+
+
+@app.post("/questions")
+def create_question(data: QuestionCreate):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        session_code = data.session_code.strip().upper()
+        question_text = data.question_text.strip()
+
+        if not question_text:
+            raise HTTPException(
+                status_code=400,
+                detail="Question cannot be empty."
+            )
+
+        # Get participant name
+        cursor.execute(
+            """
+            SELECT participant_name
+            FROM participants
+            WHERE id = %s
+              AND session_code = %s
+            """,
+            (data.participant_id, session_code)
+        )
+
+        participant = cursor.fetchone()
+
+        if not participant:
+            raise HTTPException(
+                status_code=404,
+                detail="Participant not found."
+            )
+
+        participant_name = participant["participant_name"]
+
+        # Insert using the ACTUAL questions table columns
+        cursor.execute(
+            """
+            INSERT INTO questions
+            (session_code, participant_name, question)
+            VALUES (%s, %s, %s)
+            """,
+            (
+                session_code,
+                participant_name,
+                question_text
+            )
+        )
+
+        question_id = cursor.lastrowid
+
+        connection.commit()
+
+        return {
+            "message": "Question submitted successfully",
+            "question_id": question_id,
+            "participant_name": participant_name,
+            "question": question_text
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        connection.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@app.get("/questions/{session_code}")
+def get_questions(session_code: str):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        normalized_code = session_code.strip().upper()
+
+        cursor.execute(
+            """
+            SELECT
+                session_code,
+                participant_name,
+                question,
+                created_at
+            FROM questions
+            WHERE session_code = %s
+            ORDER BY created_at DESC
+            """,
+            (normalized_code,)
+        )
+
+        questions = cursor.fetchall()
+
+        return {
+            "session_code": normalized_code,
+            "questions": questions
+        }
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# ==================================================
+# REACTIONS
+# ==================================================
+
+class ReactionCreate(BaseModel):
+    session_code: str
+    participant_id: int
+    reaction: str
+
+
+@app.post("/reactions")
+def create_reaction(data: ReactionCreate):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        session_code = data.session_code.strip().upper()
+        reaction = data.reaction.strip()
+
+        if not reaction:
+            raise HTTPException(
+                status_code=400,
+                detail="Reaction cannot be empty."
+            )
+
+        # Get participant name
+        cursor.execute(
+            """
+            SELECT participant_name
+            FROM participants
+            WHERE id = %s
+              AND session_code = %s
+            """,
+            (data.participant_id, session_code)
+        )
+
+        participant = cursor.fetchone()
+
+        if not participant:
+            raise HTTPException(
+                status_code=404,
+                detail="Participant not found."
+            )
+
+        participant_name = participant["participant_name"]
+
+        # Save reaction
+        cursor.execute(
+            """
+            INSERT INTO reactions
+            (session_code, participant_name, reaction)
+            VALUES (%s, %s, %s)
+            """,
+            (
+                session_code,
+                participant_name,
+                reaction
+            )
+        )
+
+        connection.commit()
+
+        return {
+            "message": "Reaction sent successfully",
+            "participant_name": participant_name,
+            "reaction": reaction
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@app.get("/reactions/{session_code}")
+def get_reactions(session_code: str):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        normalized_code = session_code.strip().upper()
+
+        cursor.execute(
+            """
+            SELECT reaction, COUNT(*) AS count
+            FROM reactions
+            WHERE session_code = %s
+            GROUP BY reaction
+            ORDER BY count DESC
+            """,
+            (normalized_code,)
+        )
+
+        reactions = cursor.fetchall()
+
+        return {
+            "session_code": normalized_code,
+            "reactions": reactions
+        }
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# ==================================================
+# ANNOUNCEMENTS
+# ==================================================
+
+class AnnouncementCreate(BaseModel):
+    session_code: str
+    message: str
+
+
+@app.post("/announcements")
+def create_announcement(data: AnnouncementCreate):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        session_code = data.session_code.strip().upper()
+        message = data.message.strip()
+
+        if not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Announcement message cannot be empty."
+            )
+
+        # Check session exists
+        cursor.execute(
+            """
+            SELECT id
+            FROM sessions
+            WHERE session_code = %s
+            """,
+            (session_code,)
+        )
+
+        session = cursor.fetchone()
+
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found."
+            )
+
+        # Save announcement
+        cursor.execute(
+            """
+            INSERT INTO announcements
+            (session_code, message)
+            VALUES (%s, %s)
+            """,
+            (
+                session_code,
+                message
+            )
+        )
+
+        announcement_id = cursor.lastrowid
+
+        connection.commit()
+
+        return {
+            "message": "Announcement sent successfully",
+            "announcement_id": announcement_id,
+            "session_code": session_code,
+            "announcement": message
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        connection.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@app.get("/announcements/{session_code}")
+def get_announcements(session_code: str):
+
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        normalized_code = session_code.strip().upper()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                session_code,
+                message,
+                created_at
+            FROM announcements
+            WHERE session_code = %s
+            ORDER BY created_at DESC
+            """,
+            (normalized_code,)
+        )
+
+        announcements = cursor.fetchall()
+
+        return {
+            "session_code": normalized_code,
+            "announcements": announcements
+        }
+
+    finally:
+        cursor.close()
+        connection.close()
