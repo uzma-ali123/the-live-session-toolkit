@@ -267,56 +267,197 @@ def make_qr(data):
 
 
 def home_page():
+    # --------------------------------------------------
+    # Hero
+    # --------------------------------------------------
     st.markdown(
         '<div class="hero"><div class="hero-grid">'
         '<div><div class="hero-kicker">LIVE SESSION TOOLKIT</div>'
         '<div class="hero-title">Create, host and engage — <span class="accent">all in one place.</span></div>'
         '<div class="hero-text">Run interactive live sessions with polls, Q&amp;A, announcements, reactions and engagement insights from one clean workspace.</div>'
-        '<div class="hero-badges"><span class="hero-badge">✓ Real-time</span><span class="hero-badge">✓ Interactive</span><span class="hero-badge">✓ Easy to use</span><span class="hero-badge">✓ Secure host access</span></div></div>'
-        '<div class="hero-visual"><div class="monitor"><div class="monitor-screen"><div class="mini-top"><div class="mini-line"></div><div class="mini-pill"></div></div><div class="mini-grid"><div class="mini-card"><b>Participants</b><div class="mini-bar"></div></div><div class="mini-card"><b>Live Poll</b><div class="mini-bar" style="background:linear-gradient(90deg,#7c4dff 55%,#e6ebf5 55%);"></div></div><div class="mini-card"><b>Questions</b><div class="mini-bar" style="background:linear-gradient(90deg,#23b7a4 80%,#e6ebf5 80%);"></div></div><div class="mini-card"><b>Reactions</b><div class="mini-bar" style="background:linear-gradient(90deg,#ff9f43 45%,#e6ebf5 45%);"></div></div></div></div></div>'
-        '<div class="float-card poll"><span>📊</span>Live Polls</div><div class="float-card qa"><span>💬</span>Q&amp;A</div><div class="float-card react"><span>❤️</span>Reactions</div></div>'
-        '</div></div>', unsafe_allow_html=True
+        '<div class="hero-badges">'
+        '<span class="hero-badge">✓ Real-time</span>'
+        '<span class="hero-badge">✓ Interactive</span>'
+        '<span class="hero-badge">✓ Easy to use</span>'
+        '<span class="hero-badge">✓ Secure host access</span>'
+        '</div></div>'
+        '<div class="hero-visual">'
+        '<div class="monitor"><div class="monitor-screen">'
+        '<div class="mini-top"><div class="mini-line"></div><div class="mini-pill"></div></div>'
+        '<div class="mini-grid">'
+        '<div class="mini-card"><b>Participants</b><div class="mini-bar"></div></div>'
+        '<div class="mini-card"><b>Live Poll</b><div class="mini-bar" style="background:linear-gradient(90deg,#7c4dff 55%,#e6ebf5 55%);"></div></div>'
+        '<div class="mini-card"><b>Questions</b><div class="mini-bar" style="background:linear-gradient(90deg,#23b7a4 80%,#e6ebf5 80%);"></div></div>'
+        '<div class="mini-card"><b>Reactions</b><div class="mini-bar" style="background:linear-gradient(90deg,#ff9f43 45%,#e6ebf5 45%);"></div></div>'
+        '</div></div></div>'
+        '<div class="float-card poll"><span>📊</span>Live Polls</div>'
+        '<div class="float-card qa"><span>💬</span>Q&amp;A</div>'
+        '<div class="float-card react"><span>❤️</span>Reactions</div>'
+        '</div></div></div>',
+        unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="section-head"><div><div class="section-title">Get started</div><div class="section-caption">Choose how you want to use the platform.</div></div></div>', unsafe_allow_html=True)
+    # --------------------------------------------------
+    # Primary actions
+    # --------------------------------------------------
+    st.markdown(
+        '<div class="section-head"><div><div class="section-title">Get started</div>'
+        '<div class="section-caption">Choose how you want to use the platform.</div></div></div>',
+        unsafe_allow_html=True,
+    )
     c1, c2 = st.columns(2, gap="medium")
     with c1:
-        st.markdown('<div class="action-card host"><div class="action-icon">🎤</div><div class="action-title">Host a Session</div><div class="action-text">Create a protected live workspace with polls, Q&amp;A, announcements, reactions and analytics.</div></div>', unsafe_allow_html=True)
-        if st.button("Create a Session  →", key="home_create", use_container_width=True): go_to("create")
+        st.markdown(
+            '<div class="action-card host"><div class="action-icon">🎤</div>'
+            '<div class="action-title">Host a Session</div>'
+            '<div class="action-text">Create a protected live workspace with polls, Q&amp;A, announcements, reactions and analytics.</div></div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("Create a Session  →", key="home_create", use_container_width=True):
+            go_to("create")
     with c2:
-        st.markdown('<div class="action-card join"><div class="action-icon">👥</div><div class="action-title">Join a Session</div><div class="action-text">Enter a session code and participate in live polls, questions, announcements and reactions.</div></div>', unsafe_allow_html=True)
-        if st.button("Join a Session  →", key="home_join", use_container_width=True): go_to("join")
+        st.markdown(
+            '<div class="action-card join"><div class="action-icon">👥</div>'
+            '<div class="action-title">Join a Session</div>'
+            '<div class="action-text">Enter a session code and participate in live polls, questions, announcements and reactions.</div></div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("Join a Session  →", key="home_join", use_container_width=True):
+            go_to("join")
 
-    st.markdown('<div class="section-head"><div><div class="section-title">Live workspace</div><div class="section-caption">Everything you need for a smooth interactive session.</div></div></div>', unsafe_allow_html=True)
-    a,b,c = st.columns([1.15,1.0,.8], gap="medium")
-    with a:
-        if st.session_state.get("host_authenticated") and st.session_state.get("session_code"):
-            counts=host_counts()
-            st.markdown(f'<div class="card"><div class="card-title">Total Engagement</div><div class="card-text">Live activity at a glance.</div><div style="height:.65rem"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">'
-                        f'<div class="feature-chip"><div class="feature-icon">👥</div><b>{counts["participants"]}</b><div class="card-text">Participants</div></div>'
-                        f'<div class="feature-chip"><div class="feature-icon">📊</div><b>{counts["polls"]}</b><div class="card-text">Polls</div></div>'
-                        f'<div class="feature-chip"><div class="feature-icon">💬</div><b>{counts["questions"]}</b><div class="card-text">Questions</div></div>'
-                        f'<div class="feature-chip"><div class="feature-icon">😊</div><b>{counts["reactions"]}</b><div class="card-text">Reactions</div></div></div></div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="card"><div class="card-title">Total Engagement</div><div class="card-text">Your live room brings interaction into one workspace.</div><div style="height:.7rem"></div><div class="activity"><div class="activity-title">📊 Live polls</div><div class="activity-text">Collect instant audience responses.</div></div><div class="activity"><div class="activity-title">💬 Audience Q&amp;A</div><div class="activity-text">Keep questions organized and visible.</div></div><div class="activity"><div class="activity-title">😊 Reactions</div><div class="activity-text">Let the audience respond naturally.</div></div></div>', unsafe_allow_html=True)
-    with b:
-        st.markdown('<div class="card"><div class="card-title">Recent Activity</div><div class="card-text">Keep every interaction moving.</div><div class="activity"><div class="activity-title">🟣 Poll created</div><div class="activity-text">Audience can vote instantly.</div></div><div class="activity"><div class="activity-title">🔵 Question received</div><div class="activity-text">Questions stay in one place.</div></div><div class="activity"><div class="activity-title">🟢 Announcement sent</div><div class="activity-text">Reach everyone at once.</div></div><div class="activity"><div class="activity-title">🟠 Reaction added</div><div class="activity-text">See the room response.</div></div></div>', unsafe_allow_html=True)
-    with c:
-        if st.session_state.get("host_authenticated") and st.session_state.get("session_code"):
-            code=st.session_state.session_code
-            app_url = os.getenv("STREAMLIT_APP_URL", "") or ""
-            qr_data = f"{app_url}?join={code}" if app_url else code
-            st.markdown('<div class="qr-card"><div class="card-title">Quick Join</div><div class="card-text">Scan this QR code to join.</div></div>', unsafe_allow_html=True)
-            st.image(make_qr(qr_data), width=175)
-            st.markdown(f'<div style="text-align:center;font-size:.68rem;color:#55708f;font-weight:800;letter-spacing:.12em;">SESSION CODE · {code}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="qr-card"><div style="font-size:2rem;margin-bottom:.25rem">▦</div><div class="card-title">Quick Join QR</div><div class="card-text">Create a session to generate a scannable QR code for your audience.</div></div>', unsafe_allow_html=True)
+    # --------------------------------------------------
+    # Workspace snapshot
+    # --------------------------------------------------
+    st.markdown(
+        '<div class="section-head"><div><div class="section-title">Live workspace</div>'
+        '<div class="section-caption">Everything you need for a smooth interactive session.</div></div></div>',
+        unsafe_allow_html=True,
+    )
 
-    st.markdown('<div class="section-head"><div><div class="section-title">Built for engagement</div><div class="section-caption">Simple tools with a professional live-room experience.</div></div></div>', unsafe_allow_html=True)
-    cols=st.columns(4, gap="medium")
-    features=[("📊","Polls","Launch questions and collect votes instantly."),("💬","Q&A","Keep audience questions organized."),("📢","Announcements","Send important updates to everyone."),("😊","Reactions","Let participants react with expressive emojis.")]
-    for col,(icon,title,text) in zip(cols,features):
-        with col: st.markdown(f'<div class="feature-chip"><div class="feature-icon">{icon}</div><div class="card-title">{title}</div><div class="card-text">{text}</div></div>',unsafe_allow_html=True)
+    if st.session_state.get("host_authenticated") and st.session_state.get("session_code"):
+        counts = host_counts()
+
+        a, b, c = st.columns([1.15, 1.0, 0.82], gap="medium")
+
+        # Total engagement
+        with a:
+            st.markdown(
+                f'<div class="card"><div class="card-title">Total Engagement</div>'
+                f'<div class="card-text">Live activity at a glance.</div><div style="height:.65rem"></div>'
+                f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;">'
+                f'<div class="feature-chip"><div class="feature-icon">👥</div><b style="font-size:1.35rem;color:#17243f;">{counts["participants"]}</b><div class="card-text">Participants</div></div>'
+                f'<div class="feature-chip"><div class="feature-icon">📊</div><b style="font-size:1.35rem;color:#17243f;">{counts["polls"]}</b><div class="card-text">Polls</div></div>'
+                f'<div class="feature-chip"><div class="feature-icon">💬</div><b style="font-size:1.35rem;color:#17243f;">{counts["questions"]}</b><div class="card-text">Questions</div></div>'
+                f'<div class="feature-chip"><div class="feature-icon">😊</div><b style="font-size:1.35rem;color:#17243f;">{counts["reactions"]}</b><div class="card-text">Reactions</div></div>'
+                f'</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        # Recent activity
+        with b:
+            st.markdown(
+                '<div class="card"><div class="card-title">Recent Activity</div>'
+                '<div class="activity"><div class="activity-title">📊 Poll activity</div><div class="activity-text">Launch or review live polls.</div></div>'
+                '<div class="activity"><div class="activity-title">💬 New questions</div><div class="activity-text">Keep up with audience Q&amp;A.</div></div>'
+                '<div class="activity"><div class="activity-title">👏 Audience reactions</div><div class="activity-text">Track live engagement.</div></div>'
+                '<div class="activity"><div class="activity-title">📢 Announcements</div><div class="activity-text">Share important updates.</div></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+        # QR
+        with c:
+            st.markdown(
+                '<div class="qr-card"><div class="card-title">Quick Join</div>'
+                '<div class="card-text">Scan this QR code to join the session.</div></div>',
+                unsafe_allow_html=True,
+            )
+            st.image(make_qr(st.session_state.session_code), width=170)
+            st.markdown(
+                f'<div style="text-align:center;font-size:.67rem;color:#55708f;font-weight:800;letter-spacing:.12em;margin-top:-.25rem;">'
+                f'SESSION CODE: {st.session_state.session_code}</div>',
+                unsafe_allow_html=True,
+            )
+
+        # Engagement chart on Home
+        st.markdown(
+            '<div class="section-head"><div><div class="section-title">Engagement Overview</div>'
+            '<div class="section-caption">A quick visual snapshot of your current session.</div></div></div>',
+            unsafe_allow_html=True,
+        )
+        fig = go.Figure(
+            go.Bar(
+                x=["Participants", "Polls", "Questions", "Reactions"],
+                y=[counts["participants"], counts["polls"], counts["questions"], counts["reactions"]],
+                text=[counts["participants"], counts["polls"], counts["questions"], counts["reactions"]],
+                textposition="outside",
+                marker=dict(color=["#4f8cff", "#7c4dff", "#23b7a4", "#ff9f43"]),
+            )
+        )
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=25, b=20),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            showlegend=False,
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor="#edf1f7", rangemode="tozero"),
+            font=dict(family="Inter", color="#40527a"),
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    else:
+        # Public home: useful product highlights before a session exists.
+        a, b, c = st.columns([1.15, 1.0, 0.82], gap="medium")
+        with a:
+            st.markdown(
+                '<div class="card"><div class="card-title">Total Engagement</div>'
+                '<div class="card-text">Your live room brings interaction into one workspace.</div>'
+                '<div style="height:.7rem"></div>'
+                '<div class="activity"><div class="activity-title">👥 Participants</div><div class="activity-text">Bring your audience together.</div></div>'
+                '<div class="activity"><div class="activity-title">📊 Polls</div><div class="activity-text">Ask and collect instant responses.</div></div>'
+                '<div class="activity"><div class="activity-title">💬 Q&amp;A</div><div class="activity-text">Collect audience questions.</div></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+        with b:
+            st.markdown(
+                '<div class="card"><div class="card-title">Recent Activity</div>'
+                '<div class="activity"><div class="activity-title">📊 Live polls</div><div class="activity-text">Create interactive questions.</div></div>'
+                '<div class="activity"><div class="activity-title">👏 Reactions</div><div class="activity-text">Let your audience respond with emojis.</div></div>'
+                '<div class="activity"><div class="activity-title">📢 Announcements</div><div class="activity-text">Keep everyone informed.</div></div>'
+                '<div class="activity"><div class="activity-title">📈 Analytics</div><div class="activity-text">Understand engagement at a glance.</div></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+        with c:
+            st.markdown(
+                '<div class="qr-card"><div class="card-title">Quick Join</div>'
+                '<div class="card-text">Create a session first to generate its unique QR code.</div>'
+                '<div style="font-size:3.2rem;margin:1.15rem 0 .45rem;">▦</div>'
+                '<div class="card-text">Your audience can scan the code and join quickly.</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown(
+            '<div class="section-head"><div><div class="section-title">Built for engaging sessions</div>'
+            '<div class="section-caption">Everything is ready when you create your first live room.</div></div></div>',
+            unsafe_allow_html=True,
+        )
+        features = [
+            ("📊", "Live Polls", "Ask questions and collect instant responses."),
+            ("💬", "Q&amp;A", "Keep audience questions organized."),
+            ("📢", "Announcements", "Send important updates to everyone."),
+            ("😊", "Reactions", "Let participants react with expressive emojis."),
+        ]
+        cols = st.columns(4, gap="medium")
+        for col, (icon, title, text) in zip(cols, features):
+            with col:
+                st.markdown(
+                    f'<div class="feature-chip"><div class="feature-icon">{icon}</div>'
+                    f'<div class="card-title">{title}</div><div class="card-text">{text}</div></div>',
+                    unsafe_allow_html=True,
+                )
 
 # ==================================================
 # CREATE SESSION
