@@ -6,6 +6,7 @@ from io import BytesIO
 import qrcode
 import requests
 import streamlit as st
+import plotly.graph_objects as go
 
 try:
     BACKEND_URL = st.secrets["BACKEND_URL"]
@@ -28,78 +29,82 @@ st.markdown(
 <style>
 #MainMenu, footer {visibility:hidden;}
 header {background:transparent !important;}
-.stApp {background:#f5f7fb;}
-.main .block-container {max-width:1500px; padding:2rem 2.6rem 3rem;}
+.stApp {background:linear-gradient(180deg,#f7f9ff 0%,#f4f7fb 100%);}
+.main .block-container {max-width:1500px; padding:1.5rem 2.4rem 3rem;}
 
-/* Hide Streamlit's sidebar decoration / empty blocks */
-section[data-testid="stSidebar"] {background:#0f172a !important; border-right:1px solid #1e293b;}
-section[data-testid="stSidebar"] > div {background:#0f172a !important;}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {background:#0f172a !important; padding:1.2rem 1rem 1.5rem;}
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {background:transparent !important;}
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {background:transparent !important;}
+section[data-testid="stSidebar"] {background:linear-gradient(180deg,#081b3a 0%,#0b1f46 55%,#101b3d 100%) !important; border-right:0 !important;}
+section[data-testid="stSidebar"] > div,
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {background:transparent !important;}
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"],
 section[data-testid="stSidebar"] .stMarkdown {background:transparent !important;}
-section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] label {color:#e5e7eb;}
-
-.brand {font-size:1.18rem;font-weight:800;color:#fff !important;letter-spacing:-.02em;margin:.1rem 0 0;}
-.brand-sub {font-size:.73rem;color:#94a3b8 !important;margin:.2rem 0 1.1rem;}
-.nav-title {font-size:.66rem;font-weight:800;letter-spacing:.12em;color:#64748b !important;margin:1rem .2rem .45rem;}
-.session-mini {background:#172033;border:1px solid #263449;border-radius:12px;padding:.8rem .85rem;margin-top:.75rem;}
-.session-mini-label {font-size:.64rem;color:#94a3b8 !important;font-weight:700;letter-spacing:.08em;}
-.session-mini-code {font-size:1.15rem;color:#fff !important;font-weight:800;letter-spacing:.14em;margin-top:.2rem;}
-.session-mini-name {font-size:.72rem;color:#cbd5e1 !important;margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-section[data-testid="stSidebar"] .stButton > button {
-    background:transparent !important;border:1px solid transparent !important;color:#cbd5e1 !important;
-    text-align:left !important;border-radius:9px !important;min-height:40px !important;padding:.5rem .75rem !important;
-    font-weight:600 !important;margin:.08rem 0 !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {background:#172033 !important;border-color:#263449 !important;color:#fff !important;}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {padding:1.1rem .9rem 1.5rem;}
+section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {color:#dbe7ff;}
+.brand {font-size:1.18rem;font-weight:800;color:#fff !important;letter-spacing:-.025em;margin:.15rem .35rem 0;}
+.brand-sub {font-size:.72rem;color:#8fa6cb !important;margin:.18rem .35rem 1.15rem;}
+.nav-title {font-size:.63rem;font-weight:800;letter-spacing:.14em;color:#7690ba !important;margin:1.05rem .35rem .42rem;}
+.session-mini {background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.82rem .85rem;margin-top:.7rem;}
+.session-mini-label {font-size:.61rem;color:#91a8cc !important;font-weight:800;letter-spacing:.1em;}
+.session-mini-code {font-size:1.18rem;color:#fff !important;font-weight:850;letter-spacing:.15em;margin-top:.18rem;}
+.session-mini-name {font-size:.71rem;color:#c4d2ea !important;margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+section[data-testid="stSidebar"] .stButton > button {background:transparent !important;border:1px solid transparent !important;color:#c9d6eb !important;text-align:left !important;border-radius:10px !important;min-height:40px !important;padding:.48rem .72rem !important;font-weight:650 !important;margin:.08rem 0 !important;}
+section[data-testid="stSidebar"] .stButton > button:hover {background:linear-gradient(90deg,rgba(99,102,241,.3),rgba(59,130,246,.12)) !important;border-color:rgba(129,140,248,.28) !important;color:#fff !important;}
 section[data-testid="stSidebar"] .stButton > button p {color:inherit !important;}
 
-h1 {font-size:2.25rem !important;color:#0f172a !important;letter-spacing:-.035em;}
-h2,h3 {color:#0f172a !important;}
-p {color:#64748b;}
-
-/* Topbar */
-.topbar {display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.5rem;}
-.eyebrow {font-size:.72rem;font-weight:800;letter-spacing:.11em;color:#64748b;text-transform:uppercase;}
-.page-title {font-size:2.1rem;font-weight:800;color:#0f172a;letter-spacing:-.04em;margin-top:.18rem;}
-.page-subtitle {color:#64748b;font-size:.92rem;margin-top:.3rem;}
-.live-pill {display:inline-flex;align-items:center;gap:.45rem;background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;border-radius:999px;padding:.4rem .7rem;font-size:.72rem;font-weight:800;}
-.live-dot {width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;}
-
-.card {background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:1.25rem;box-shadow:0 5px 18px rgba(15,23,42,.045);}
-.card-title {font-size:1rem;font-weight:750;color:#111827;margin-bottom:.3rem;}
-.card-text {font-size:.84rem;color:#64748b;line-height:1.55;}
-.metric {background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:1.05rem 1.1rem;box-shadow:0 4px 15px rgba(15,23,42,.035);}
-.metric-label {font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.08em;}
-.metric-value {font-size:1.65rem;font-weight:800;color:#0f172a;margin-top:.18rem;}
-.metric-note {font-size:.72rem;color:#64748b;margin-top:.12rem;}
-.section-head {display:flex;justify-content:space-between;align-items:end;gap:1rem;margin:1.6rem 0 .75rem;}
-.section-title {font-size:1.08rem;font-weight:800;color:#0f172a;}
-.section-caption {font-size:.78rem;color:#94a3b8;}
-.code-box {background:#0f172a;border-radius:14px;padding:1.15rem 1.25rem;color:#fff;}
-.code-label {font-size:.64rem;color:#94a3b8;font-weight:800;letter-spacing:.1em;}
-.code-value {font-size:1.8rem;font-weight:850;letter-spacing:.16em;margin-top:.2rem;}
-.activity {padding:.8rem 0;border-bottom:1px solid #eef2f7;}
+h1,h2,h3 {color:#14213d !important;}
+h1 {font-size:2.15rem !important;letter-spacing:-.035em;}
+p {color:#667795;}
+.topbar {display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.35rem;}
+.eyebrow {font-size:.68rem;font-weight:850;letter-spacing:.13em;color:#7182a2;text-transform:uppercase;}
+.page-title {font-size:2rem;font-weight:800;color:#15213b;letter-spacing:-.035em;margin-top:.18rem;}
+.page-subtitle {color:#70809e;font-size:.9rem;margin-top:.28rem;}
+.live-pill {display:inline-flex;align-items:center;gap:.42rem;background:#e9fff5;border:1px solid #b7f0d3;color:#07865c;border-radius:999px;padding:.42rem .72rem;font-size:.7rem;font-weight:850;}
+.live-dot {width:7px;height:7px;border-radius:50%;background:#18b978;display:inline-block;box-shadow:0 0 0 4px rgba(24,185,120,.12);}
+.card {background:#fff;border:1px solid #e5eaf3;border-radius:17px;padding:1.18rem;box-shadow:0 8px 24px rgba(31,52,92,.055);}
+.card-title {font-size:1rem;font-weight:780;color:#17243f;margin-bottom:.28rem;}
+.card-text {font-size:.82rem;color:#6c7c9b;line-height:1.55;}
+.metric {background:#fff;border:1px solid #e5eaf3;border-radius:16px;padding:1rem 1.08rem;box-shadow:0 7px 20px rgba(31,52,92,.05);min-height:108px;}
+.metric-label {font-size:.64rem;font-weight:850;color:#91a1bd;letter-spacing:.1em;}
+.metric-value {font-size:1.7rem;font-weight:850;color:#14213d;margin-top:.15rem;}
+.metric-note {font-size:.7rem;color:#8290aa;margin-top:.08rem;}
+.section-head {display:flex;justify-content:space-between;align-items:end;gap:1rem;margin:1.45rem 0 .7rem;}
+.section-title {font-size:1.06rem;font-weight:820;color:#17243f;}
+.section-caption {font-size:.76rem;color:#91a1bd;}
+.code-box {background:linear-gradient(135deg,#102a62,#5532e8);border-radius:15px;padding:1.05rem 1.18rem;color:#fff;box-shadow:0 10px 24px rgba(67,56,202,.18);}
+.code-label {font-size:.61rem;color:#c6d4ff;font-weight:850;letter-spacing:.1em;}
+.code-value {font-size:1.75rem;font-weight:850;letter-spacing:.16em;margin-top:.18rem;}
+.activity {padding:.78rem 0;border-bottom:1px solid #edf1f7;}
 .activity:last-child {border-bottom:0;}
-.activity-title {font-size:.86rem;font-weight:700;color:#1e293b;}
-.activity-text {font-size:.75rem;color:#94a3b8;margin-top:.15rem;}
+.activity-title {font-size:.84rem;font-weight:720;color:#243452;}
+.activity-text {font-size:.73rem;color:#91a1bd;margin-top:.12rem;}
+.main .stButton > button {border-radius:11px;min-height:42px;font-weight:700;border:1px solid #dce3ee;background:#fff;color:#18243e;transition:.15s;}
+.main .stButton > button:hover {background:linear-gradient(135deg,#eef2ff,#eaf7ff);color:#4f46e5;border-color:#c7d2fe;}
+.stTextInput input,.stTextArea textarea {border-radius:11px !important;border:1px solid #dce3ee !important;background:#fff !important;color:#17243f !important;}
+.stTextInput input:focus,.stTextArea textarea:focus {border-color:#7c83f6 !important;box-shadow:0 0 0 2px rgba(99,102,241,.1) !important;}
+[data-testid="stDataFrame"] {border:1px solid #e5eaf3;border-radius:12px;overflow:hidden;}
 
-.main .stButton > button {border-radius:10px;min-height:42px;font-weight:650;border:1px solid #dbe1e8;background:#fff;color:#0f172a;}
-.main .stButton > button:hover {background:#0f172a;color:#fff;border-color:#0f172a;}
-.stTextInput input,.stTextArea textarea {border-radius:10px !important;border:1px solid #dbe1e8 !important;background:#fff !important;color:#111827 !important;}
-.stTextInput input:focus,.stTextArea textarea:focus {border-color:#64748b !important;box-shadow:0 0 0 1px #64748b !important;}
-[data-testid="stDataFrame"] {border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;}
-
-.hero {background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:20px;padding:2.5rem 2.6rem;margin-bottom:1.5rem;box-shadow:0 12px 30px rgba(15,23,42,.12);}
-.hero-kicker {color:#94a3b8;font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
-.hero-title {color:#fff;font-size:2.55rem;font-weight:850;letter-spacing:-.045em;line-height:1.08;margin:.55rem 0 .8rem;}
-.hero-text {color:#cbd5e1;font-size:.94rem;max-width:760px;line-height:1.65;}
-
-@media (max-width:900px){.main .block-container{padding:1.2rem}.hero-title{font-size:2rem}.page-title{font-size:1.7rem}}
+.hero {position:relative;overflow:hidden;background:linear-gradient(120deg,#071b40 0%,#153a83 46%,#5d2ee8 100%);border-radius:21px;padding:2rem 2.25rem;margin-bottom:1.35rem;box-shadow:0 16px 38px rgba(34,50,99,.17);}
+.hero:after {content:"";position:absolute;width:330px;height:330px;right:-110px;top:-140px;border-radius:50%;background:rgba(255,255,255,.09);}
+.hero-kicker {color:#b9c9e9;font-size:.66rem;font-weight:850;letter-spacing:.13em;text-transform:uppercase;position:relative;z-index:1;}
+.hero-title {color:#fff;font-family:Arial,sans-serif;font-size:2.15rem;font-weight:750;letter-spacing:-.035em;line-height:1.12;margin:.48rem 0 .65rem;max-width:820px;position:relative;z-index:1;}
+.hero-title .accent {color:#8ee7ff;}
+.hero-text {color:#d5e0f4;font-size:.88rem;max-width:760px;line-height:1.58;position:relative;z-index:1;}
+.hero-badges {display:flex;gap:.55rem;flex-wrap:wrap;margin-top:1rem;position:relative;z-index:1;}
+.hero-badge {display:inline-flex;align-items:center;gap:.35rem;color:#f4f7ff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:.35rem .6rem;font-size:.68rem;font-weight:700;}
+.action-card {min-height:142px;border-radius:17px;padding:1.05rem 1.12rem;border:1px solid #e4e8f6;box-shadow:0 7px 22px rgba(31,52,92,.05);}
+.action-card.host {background:linear-gradient(135deg,#fbf9ff,#f3efff);}
+.action-card.join {background:linear-gradient(135deg,#f5fffb,#edfff7);border-color:#ccefe0;}
+.action-icon {font-size:1.65rem;margin-bottom:.45rem;}
+.action-title {font-size:1rem;font-weight:800;color:#17243f;}
+.action-text {font-size:.78rem;color:#6c7c9b;line-height:1.45;margin:.25rem 0 .75rem;}
+.feature-chip {background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:1rem;min-height:112px;box-shadow:0 6px 18px rgba(31,52,92,.035);}
+.feature-icon {font-size:1.2rem;margin-bottom:.3rem;}
+.qr-card {text-align:center;background:linear-gradient(145deg,#fff,#f8faff);border:1px solid #e2e7f1;border-radius:17px;padding:1rem;box-shadow:0 8px 22px rgba(31,52,92,.05);}
+.reaction-card {background:#fff;border:1px solid #e4e9f2;border-radius:16px;padding:1rem;text-align:center;box-shadow:0 7px 20px rgba(31,52,92,.045);}
+.reaction-emoji {font-size:1.7rem;}
+.reaction-name {font-size:.72rem;color:#71809d;font-weight:750;margin-top:.25rem;}
+.reaction-count {font-size:1.45rem;color:#17243f;font-weight:850;margin-top:.08rem;}
+@media (max-width:900px){.main .block-container{padding:1rem}.hero-title{font-size:1.75rem}.page-title{font-size:1.65rem}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -267,46 +272,44 @@ def host_counts():
 def home_page():
     st.markdown(
         '<div class="hero"><div class="hero-kicker">LIVE SESSION TOOLKIT</div>'
-        '<div class="hero-title">Run live sessions that feel like a real product.</div>'
-        '<div class="hero-text">Create a session, invite your audience, launch polls, collect questions, '
-        'send announcements and understand engagement from one clean workspace.</div></div>',
+        '<div class="hero-title">Create, host and engage — <span class="accent">all in one place.</span></div>'
+        '<div class="hero-text">Run interactive live sessions with polls, Q&amp;A, announcements, reactions and engagement insights from one clean workspace.</div>'
+        '<div class="hero-badges"><span class="hero-badge">✓ Real-time</span><span class="hero-badge">✓ Interactive</span><span class="hero-badge">✓ Easy to use</span><span class="hero-badge">✓ Secure host access</span></div></div>',
         unsafe_allow_html=True,
     )
-
-    st.markdown('<div class="section-head"><div><div class="section-title">Get started</div>'
-                '<div class="section-caption">Choose how you want to use the platform.</div></div></div>',
-                unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
+    st.markdown('<div class="section-head"><div><div class="section-title">Get started</div><div class="section-caption">Choose how you want to use the platform.</div></div></div>', unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="medium")
     with c1:
-        st.markdown('<div class="card"><div class="card-title">Host a Session</div>'
-                    '<div class="card-text">Create a protected host workspace with a session code, PIN, '
-                    'polls, Q&A, announcements, reactions and audience analytics.</div></div>', unsafe_allow_html=True)
-        st.write("")
-        if st.button("Create a Session", key="home_create", use_container_width=True):
-            go_to("create")
+        st.markdown('<div class="action-card host"><div class="action-icon">🎤</div><div class="action-title">Host a Session</div><div class="action-text">Create a protected workspace with a session code, PIN, live polls, Q&amp;A, announcements, reactions and analytics.</div></div>', unsafe_allow_html=True)
+        if st.button("Create a Session  →", key="home_create", use_container_width=True): go_to("create")
     with c2:
-        st.markdown('<div class="card"><div class="card-title">Join a Session</div>'
-                    '<div class="card-text">Enter a session code and participate in live polls, questions, '
-                    'announcements and reactions.</div></div>', unsafe_allow_html=True)
-        st.write("")
-        if st.button("Join a Session", key="home_join", use_container_width=True):
-            go_to("join")
+        st.markdown('<div class="action-card join"><div class="action-icon">👥</div><div class="action-title">Join a Session</div><div class="action-text">Enter a session code and participate in live polls, questions, announcements and reactions.</div></div>', unsafe_allow_html=True)
+        if st.button("Join a Session  →", key="home_join", use_container_width=True): go_to("join")
 
-    st.markdown('<div class="section-head"><div><div class="section-title">Built for engagement</div>'
-                '<div class="section-caption">Everything important is organized in the workspace.</div></div></div>',
-                unsafe_allow_html=True)
-    cols = st.columns(4)
-    features = [
-        ("Live Polls", "Create questions and collect audience votes."),
-        ("Q&A", "Give participants a direct channel to ask questions."),
-        ("Announcements", "Send important messages to everyone instantly."),
-        ("Analytics", "See participation and interaction at a glance."),
-    ]
-    for col, (title, text) in zip(cols, features):
-        with col:
-            st.markdown(f'<div class="card"><div class="card-title">{title}</div>'
-                        f'<div class="card-text">{text}</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-head"><div><div class="section-title">Quick Join</div><div class="section-caption">Scan a session QR code to get started.</div></div></div>', unsafe_allow_html=True)
+    q1, q2, q3 = st.columns([1.05, 1.25, 1.05], gap="medium")
+    with q1:
+        st.markdown('<div class="feature-chip"><div class="feature-icon">📊</div><div class="card-title">Live Polls</div><div class="card-text">Ask questions and collect audience votes instantly.</div></div>', unsafe_allow_html=True)
+    with q2:
+        if st.session_state.get("host_authenticated") and st.session_state.get("session_code"):
+            code = st.session_state.session_code
+            qr = qrcode.QRCode(version=1, box_size=7, border=3)
+            qr.add_data(code); qr.make(fit=True)
+            img = qr.make_image()
+            buf = BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
+            st.markdown('<div class="qr-card"><div class="card-title">📱 Quick Join QR</div><div class="card-text">Scan and enter the session code</div></div>', unsafe_allow_html=True)
+            st.image(buf, width=170)
+            st.markdown(f'<div style="text-align:center;font-weight:800;color:#40527a;letter-spacing:.12em;">{code}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="qr-card"><div style="font-size:2rem">▦</div><div class="card-title">QR Code</div><div class="card-text">Create or open a host session to generate its unique QR code.</div></div>', unsafe_allow_html=True)
+    with q3:
+        st.markdown('<div class="feature-chip"><div class="feature-icon">📈</div><div class="card-title">Engagement</div><div class="card-text">Track participation, questions, polls and reactions.</div></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-head"><div><div class="section-title">Everything your live room needs</div><div class="section-caption">Simple tools, organized for a smooth session.</div></div></div>', unsafe_allow_html=True)
+    cols = st.columns(4, gap="medium")
+    features = [("💬","Q&A","Give participants a direct channel to ask questions."),("📢","Announcements","Send important messages to everyone instantly."),("😊","Reactions","Let the audience respond with expressive emojis."),("📊","Analytics","See engagement trends in a visual dashboard.")]
+    for col,(icon,title,text) in zip(cols,features):
+        with col: st.markdown(f'<div class="feature-chip"><div class="feature-icon">{icon}</div><div class="card-title">{title}</div><div class="card-text">{text}</div></div>',unsafe_allow_html=True)
 
 # ==================================================
 # CREATE SESSION
@@ -409,51 +412,28 @@ def host_login_page():
 # ==================================================
 
 def dashboard_page():
-    if not st.session_state.get("host_authenticated", False):
-        go_to("host_login")
-        return
+    if not st.session_state.get("host_authenticated", False): go_to("host_login"); return
     code = st.session_state.session_code
     name = st.session_state.session_name
     host = st.session_state.host_name
     counts = host_counts()
     host_header("Dashboard", f"Welcome back, {host}. Your live workspace is ready.")
-
-    metrics = [
-        ("PARTICIPANTS", counts["participants"], "Audience registered"),
-        ("POLLS", counts["polls"], "Interactive polls"),
-        ("QUESTIONS", counts["questions"], "Audience questions"),
-        ("REACTIONS", counts["reactions"], "Total reactions"),
-    ]
-    cols = st.columns(4)
-    for col, (label, value, note) in zip(cols, metrics):
-        with col:
-            st.markdown(f'<div class="metric"><div class="metric-label">{label}</div>'
-                        f'<div class="metric-value">{value}</div><div class="metric-note">{note}</div></div>',
-                        unsafe_allow_html=True)
-
-    st.write("")
-    left, right = st.columns([1.3, .7])
+    metrics=[("👥","PARTICIPANTS",counts["participants"],"Audience registered"),("📊","POLLS",counts["polls"],"Interactive polls"),("💬","QUESTIONS",counts["questions"],"Audience questions"),("😊","REACTIONS",counts["reactions"],"Total reactions")]
+    cols=st.columns(4,gap="medium")
+    for col,(icon,label,value,note) in zip(cols,metrics):
+        with col: st.markdown(f'<div class="metric"><div style="font-size:1.05rem">{icon}</div><div class="metric-label">{label}</div><div class="metric-value">{value}</div><div class="metric-note">{note}</div></div>',unsafe_allow_html=True)
+    st.markdown('<div class="section-head"><div><div class="section-title">Your live session</div><div class="section-caption">Share the code or QR with your audience.</div></div></div>',unsafe_allow_html=True)
+    left,right=st.columns([1.45,.8],gap="medium")
     with left:
-        st.markdown(f'<div class="card"><div class="card-title">{name}</div>'
-                    f'<div class="card-text">Your session is live. Use the workspace navigation to manage each part of the event.</div>'
-                    f'<div style="height:.9rem"></div><div class="code-box"><div class="code-label">SESSION CODE</div>'
-                    f'<div class="code-value">{code}</div></div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="card"><div class="card-title">{name}</div><div class="card-text">Hosted by {host}. Your session is currently live and ready for audience interaction.</div><div style="height:.8rem"></div><div class="code-box"><div class="code-label">SESSION CODE</div><div class="code-value">{code}</div></div></div>',unsafe_allow_html=True)
     with right:
-        st.markdown('<div class="card"><div class="card-title">Quick actions</div></div>', unsafe_allow_html=True)
-        if st.button("Create Poll", key="dash_poll", use_container_width=True): go_to("polls")
-        if st.button("View Participants", key="dash_part", use_container_width=True): go_to("participants")
-        if st.button("Open Q&A", key="dash_qa", use_container_width=True): go_to("qa")
-        if st.button("Send Announcement", key="dash_ann", use_container_width=True): go_to("announcements")
-
-    st.markdown('<div class="section-head"><div><div class="section-title">Session overview</div>'
-                '<div class="section-caption">Your main controls are one click away in the sidebar.</div></div></div>', unsafe_allow_html=True)
-    overview = st.columns(3)
-    with overview[0]:
-        st.markdown('<div class="card"><div class="card-title">Participants</div><div class="card-text">Monitor who has joined and search the audience.</div></div>', unsafe_allow_html=True)
-    with overview[1]:
-        st.markdown('<div class="card"><div class="card-title">Engagement</div><div class="card-text">Use polls, Q&A and reactions to keep the room active.</div></div>', unsafe_allow_html=True)
-    with overview[2]:
-        st.markdown('<div class="card"><div class="card-title">Insights</div><div class="card-text">Review interaction totals and reaction breakdowns.</div></div>', unsafe_allow_html=True)
+        qr=qrcode.QRCode(version=1,box_size=6,border=3); qr.add_data(code); qr.make(fit=True); img=qr.make_image(); buf=BytesIO(); img.save(buf,format="PNG"); buf.seek(0)
+        st.markdown('<div class="qr-card"><div class="card-title">📱 Quick Join</div><div class="card-text">Scan to join this session</div></div>',unsafe_allow_html=True); st.image(buf,width=170)
+    st.markdown('<div class="section-head"><div><div class="section-title">Quick actions</div><div class="section-caption">Jump directly to the tools you need.</div></div></div>',unsafe_allow_html=True)
+    a,b,c,d=st.columns(4,gap="small")
+    for col,label,page in [(a,"📊 Create Poll","polls"),(b,"👥 Participants","participants"),(c,"💬 Open Q&A","qa"),(d,"📢 Announcement","announcements")]:
+        with col:
+            if st.button(label,key=f"dash_{page}",use_container_width=True): go_to(page)
 
 # ==================================================
 # SESSIONS / QR
@@ -602,19 +582,23 @@ def announcements_page():
 # ==================================================
 
 def reactions_page():
-    if not st.session_state.host_authenticated:
-        go_to("host_login"); return
+    if not st.session_state.host_authenticated: go_to("host_login"); return
     code=st.session_state.session_code
-    host_header("Reactions", "See how the audience is responding in real time.")
+    host_header("Reactions","See how the audience is responding in real time.")
+    items=[]
     try:
         r=requests.get(f"{BACKEND_URL}/reactions/{code}",timeout=10)
         items=get_list(r.json(),"reactions") if r.status_code==200 else []
-        if not items: st.info("No reactions yet.")
-        cols=st.columns(4)
-        for i,item in enumerate(items):
-            with cols[i%4]:
-                st.markdown(f'<div class="metric"><div class="metric-label">{str(item.get("reaction","REACTION")).upper()}</div><div class="metric-value">{int(item.get("count",0))}</div></div>',unsafe_allow_html=True)
+        if r.status_code!=200: api_error(r,"Could not load reactions")
     except requests.RequestException as e: st.error(f"Connection error: {e}")
+    emoji_map={"Like":"👍","Love":"❤️","Clap":"👏","Interesting":"🤔","Laugh":"😂","Fire":"🔥","Amazing":"😍","Excited":"🚀"}
+    if not items: st.info("No reactions yet. Ask your audience to react during the session.")
+    else:
+        cols=st.columns(4,gap="medium")
+        for i,item in enumerate(items):
+            raw=str(item.get("reaction","Reaction")); name=raw.replace("👍 ","").replace("❤️ ","").replace("👏 ","").replace("😂 ","").replace("🔥 ","").replace("🚀 ","").strip()
+            emoji=next((e for k,e in emoji_map.items() if k.lower() in name.lower()),"😊")
+            with cols[i%4]: st.markdown(f'<div class="reaction-card"><div class="reaction-emoji">{emoji}</div><div class="reaction-name">{name.upper()}</div><div class="reaction-count">{int(item.get("count",0))}</div></div>',unsafe_allow_html=True)
     if st.button("Refresh Reactions",key="reactions_refresh_saas"): st.rerun()
 
 # ==================================================
@@ -622,29 +606,28 @@ def reactions_page():
 # ==================================================
 
 def analytics_page():
-    if not st.session_state.host_authenticated:
-        go_to("host_login"); return
+    if not st.session_state.host_authenticated: go_to("host_login"); return
     code=st.session_state.session_code
-    host_header("Analytics", "A simple live view of participation and engagement.")
+    host_header("Analytics","Visualize participation and engagement at a glance.")
     counts=host_counts()
-    cols=st.columns(4)
-    for col,(label,key) in zip(cols,[("PARTICIPANTS","participants"),("POLLS","polls"),("QUESTIONS","questions"),("REACTIONS","reactions")]):
-        with col: st.markdown(f'<div class="metric"><div class="metric-label">{label}</div><div class="metric-value">{counts[key]}</div></div>',unsafe_allow_html=True)
-    st.write("")
-    total=counts["questions"]+counts["reactions"]+counts["polls"]
-    st.markdown(f'<div class="card"><div class="card-title">Engagement summary</div>'
-                f'<div class="card-text">Total tracked interactions: <strong>{total}</strong></div>'
-                f'<div class="activity"><div class="activity-title">Questions</div><div class="activity-text">{counts["questions"]} submitted</div></div>'
-                f'<div class="activity"><div class="activity-title">Reactions</div><div class="activity-text">{counts["reactions"]} received</div></div>'
-                f'<div class="activity"><div class="activity-title">Polls</div><div class="activity-text">{counts["polls"]} created</div></div></div>',unsafe_allow_html=True)
+    cols=st.columns(4,gap="medium")
+    for col,(icon,label,key) in zip(cols,[("👥","PARTICIPANTS","participants"),("📊","POLLS","polls"),("💬","QUESTIONS","questions"),("😊","REACTIONS","reactions")]):
+        with col: st.markdown(f'<div class="metric"><div style="font-size:1.05rem">{icon}</div><div class="metric-label">{label}</div><div class="metric-value">{counts[key]}</div></div>',unsafe_allow_html=True)
+    st.markdown('<div class="section-head"><div><div class="section-title">Engagement overview</div><div class="section-caption">Current activity across your live session.</div></div></div>',unsafe_allow_html=True)
+    fig=go.Figure(go.Bar(x=["Participants","Polls","Questions","Reactions"],y=[counts["participants"],counts["polls"],counts["questions"],counts["reactions"]],text=[counts["participants"],counts["polls"],counts["questions"],counts["reactions"]],textposition="outside",marker=dict(color=["#4f8cff","#7c4dff","#23b7a4","#ff9f43"])))
+    fig.update_layout(height=340,margin=dict(l=20,r=20,t=20,b=20),plot_bgcolor="white",paper_bgcolor="white",showlegend=False,xaxis=dict(showgrid=False),yaxis=dict(showgrid=True,gridcolor="#edf1f7",rangemode="tozero"),font=dict(family="Arial",color="#40527a"))
+    st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
+    st.markdown('<div class="section-head"><div><div class="section-title">Reaction breakdown</div><div class="section-caption">See which responses are getting the most attention.</div></div></div>',unsafe_allow_html=True)
     try:
-        r=requests.get(f"{BACKEND_URL}/reactions/{code}",timeout=10)
-        items=get_list(r.json(),"reactions") if r.status_code==200 else []
+        r=requests.get(f"{BACKEND_URL}/reactions/{code}",timeout=10); items=get_list(r.json(),"reactions") if r.status_code==200 else []
         if items:
-            st.markdown('<div class="section-head"><div><div class="section-title">Reaction breakdown</div></div></div>',unsafe_allow_html=True)
-            st.dataframe([{"Reaction":x.get("reaction",""),"Count":int(x.get("count",0))} for x in items],use_container_width=True,hide_index=True)
-    except requests.RequestException:
-        pass
+            rows=[]
+            emoji_map={"Like":"👍","Love":"❤️","Clap":"👏","Interesting":"🤔","Laugh":"😂","Fire":"🔥","Amazing":"😍","Excited":"🚀"}
+            for x in items:
+                name=str(x.get("reaction","Reaction")); rows.append({"Reaction":f'{emoji_map.get(name,"😊")} {name}',"Count":int(x.get("count",0))})
+            st.dataframe(rows,use_container_width=True,hide_index=True)
+        else: st.info("No reaction data yet.")
+    except requests.RequestException: pass
 
 # ==================================================
 # JOIN + PARTICIPANT
@@ -714,12 +697,13 @@ def joined_page():
 
     st.subheader("Live Reactions")
     cols=st.columns(4)
-    for label,col in [("Like",cols[0]),("Love",cols[1]),("Clap",cols[2]),("Interesting",cols[3])]:
-        with col:
-            if st.button(label,key=f"joined_reaction_{label.lower()}",use_container_width=True):
+    reaction_choices=[("👍","Like"),("❤️","Love"),("👏","Clap"),("😂","Laugh"),("🔥","Fire"),("🚀","Excited")]
+    for i,(emoji,label) in enumerate(reaction_choices):
+        with cols[i%4]:
+            if st.button(f"{emoji} {label}",key=f"joined_reaction_{label.lower()}",use_container_width=True):
                 try:
                     r=requests.post(f"{BACKEND_URL}/reactions",json={"session_code":code,"participant_id":pid,"reaction":label},timeout=10)
-                    if r.status_code==200: st.success(f"{label} sent.")
+                    if r.status_code==200: st.success(f"{emoji} {label} sent.")
                     else: api_error(r,"Reaction submission failed")
                 except requests.RequestException as e: st.error(f"Connection error: {e}")
     st.write("")
